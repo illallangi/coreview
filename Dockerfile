@@ -2,11 +2,14 @@ FROM docker.io/library/python:3.10.7-alpine AS base
 
 FROM base as builder
 
-RUN apk add \
-  gcc=11.2.1_git20220219-r2 \
-  libffi-dev=3.4.2-r1 \
-  musl-dev=1.2.3-r0
-RUN mkdir /install
+RUN \
+  apk add --no-cache \
+    gcc=11.2.1_git20220219-r2 \
+    libffi-dev=3.4.2-r1 \
+    musl-dev=1.2.3-r0 \
+  && \
+  mkdir /install
+
 WORKDIR /install
 
 COPY requirements.txt /requirements.txt

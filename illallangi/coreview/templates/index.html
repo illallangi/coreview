@@ -1,0 +1,111 @@
+{%- extends "base.html" %}
+{% block content %}
+    <div class="row">
+      <div class="col-md-12" id="alerts">
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-md-12">
+        <table class="table table-hover table-sm">
+          <thead>
+            <tr>
+              <th scope="col">Interface</th>
+              <th scope="col">Run</th>
+              <th scope="col">Location</th>
+              <th scope="col">Description</th>
+              <th scope="col">Device</th>
+              <th scope="col">Status</th>
+            </tr>
+          </thead>
+          <tbody class="table-group-divider" id="table_body">
+          </tbody>
+        </table>
+        <p class="text-center"><a href="#show" id="show">Show All</a> | <a href="#sort" id="sort">Sort By Run</a></p>
+      </div>
+    </div>
+    <br/>
+    <br/>
+{%- endblock %}
+{% block scripts %}
+{{super()}}
+  <script>
+    var hash = "";
+    var lastStatus = {};
+    var showShutdown = false;
+    var sortByRun = false;
+
+    $(document).ready(function(){
+      showSpinner();
+      fetchInterfaces();
+    });
+    $("#show").click(function(){
+      toggleShowShutdown()
+    });
+    $("#sort").click(function(){
+      toggleSort()
+    });
+
+    function toggleShowShutdown(){
+      hash = "";
+      lastStatus = {};
+      showShutdown = !showShutdown;
+      $("#show").html(showShutdown ? "Hide Shutdown" : "Show All");
+      showSpinner();
+    }
+
+    function toggleSort(){
+      hash = "";
+      lastStatus = {};
+      sortByRun = !sortByRun;
+      $("#sort").html(sortByRun ? "Sort By Interface" : "Sort By Run");
+      showSpinner();
+    }
+
+    function showSpinner(){
+      $("#table_body").html('<tr><td colspan="6" class="align-middle"><div class="d-flex justify-content-center"><div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div></div></td></tr>');
+    }
+
+    function fetchInterfaces(){
+      $.ajax({
+        type: "GET",
+        url: "/api/v1/interfaces?sort=" + (sortByRun ? "run" : "interface"),
+        dataType: "json"
+      }).success(function (result, status, xhr) {
+        $("#refresh-time").html((new Date()).toLocaleString() + ": " + xhr.status + " " + xhr.statusText)
+        if(result.hash == hash){
+          console.log("No change in interfaces (hash " + result.hash + ")");
+          return;
+        }
+        var table_body = ''
+        result.data.forEach(interface => {
+          if(interface.status != "Hidden" && (showShutdown || interface.status != "Shutdown")){
+            table_body += '<tr class="table-' + (interface.class ?? 'success') + '">'
+            table_body += '<td>' + interface.interface + '</td>'
+            table_body += '<td>#' + (interface.run ?? '') + '</td>'
+            table_body += '<td>' + (interface.location ?? '') + '</td>'
+            table_body += '<td>' + (interface.description ?? '') + '</td>'
+            table_body += '<td>' + (interface.device ?? '') + '</td>'
+            table_body += '<td>' + interface.status + '</td>'
+            table_body += '</tr>';
+          }
+          if(interface.interface in lastStatus && interface.status != lastStatus[interface.interface])
+          {
+            console.log("Interface " + interface.interface + " changed from " + lastStatus[interface.interface] + " to " + interface.status)
+            $("#alerts").prepend('<div class="alert alert-' + (interface.class ?? 'success') + ' alert-dismissible fade show" role="alert">' +
+              '<strong>' + interface.interface +  ('run' in interface ? ' (Run #' + interface.run + ')' : '') + '</strong> changed from ' + lastStatus[interface.interface] + ' to ' + interface.status +
+              '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>')
+          }
+          lastStatus[interface.interface] = interface.status;
+        })
+        $("#table_body").html(table_body);
+        console.log(result.count + " interfaces fetched (hash " + result.hash + ")")
+        hash = result.hash
+      }).fail(function (xhr, status, error) {
+        $("#refresh-time").html((new Date()).toLocaleString() + ": " + xhr.status + " " + xhr.statusText)
+        console.log("Result: " + status + " " + error + " " + xhr.status + " " + xhr.statusText)
+      }).always(function() {
+        setTimeout(fetchInterfaces, 1000);
+      });
+    };
+  </script>
+{% endblock %}

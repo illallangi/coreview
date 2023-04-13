@@ -1,12 +1,12 @@
-FROM docker.io/library/python:3.10.7-alpine AS base
+FROM docker.io/library/python:3.11.3-alpine AS base
 
 FROM base as builder
 
 RUN \
   apk add --no-cache \
-    gcc=11.2.1_git20220219-r2 \
-    libffi-dev=3.4.2-r1 \
-    musl-dev=1.2.3-r0 \
+    gcc=12.2.1_git20220924-r4 \
+    libffi-dev=3.4.4-r0 \
+    musl-dev=1.2.3-r4 \
   && \
   mkdir /install
 

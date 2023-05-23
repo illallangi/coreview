@@ -4,9 +4,9 @@ FROM base as builder
 
 RUN \
   apk add --no-cache \
-    gcc=12.2.1_git20220924-r4 \
-    libffi-dev=3.4.4-r0 \
-    musl-dev=1.2.3-r4 \
+    gcc=12.2.1_git20220924-r10 \
+    libffi-dev=3.4.4-r2 \
+    musl-dev=1.2.4-r0 \
   && \
   mkdir /install
 

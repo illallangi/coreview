@@ -1,4 +1,4 @@
-FROM docker.io/library/python:3.11.3-alpine AS base
+FROM docker.io/library/python:3.11.4-alpine AS base
 
 FROM base as builder
 
